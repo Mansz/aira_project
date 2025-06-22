@@ -8,10 +8,10 @@ return [
     */
 
     'stateful' => explode(',', env('SANCTUM_STATEFUL_DOMAINS', sprintf(
-        '%s%s%s',
-        'localhost,localhost:5173,localhost:5176,localhost:5177,localhost:5178,localhost:5179,localhost:8010,localhost:8014,127.0.0.1,127.0.0.1:5173,127.0.0.1:5176,127.0.0.1:5177,127.0.0.1:5178,127.0.0.1:5179,127.0.0.1:8010,127.0.0.1:8014,::1',
-        env('APP_URL') ? ','.parse_url(env('APP_URL'), PHP_URL_HOST) : '',
-        env('FRONTEND_URL') ? ','.parse_url(env('FRONTEND_URL'), PHP_URL_HOST) : ''
+        '%s%s',
+        'localhost,localhost:3000,localhost:5173,localhost:5174,localhost:5175,localhost:5176,localhost:8000,'.
+        '127.0.0.1,127.0.0.1:3000,127.0.0.1:5173,127.0.0.1:5174,127.0.0.1:5175,127.0.0.1:5176,127.0.0.1:8000',
+        env('APP_URL') ? ','.parse_url(env('APP_URL'), PHP_URL_HOST) : ''
     ))),
 
     /*
@@ -28,7 +28,7 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'expiration' => null,
+    'expiration' => env('SANCTUM_TOKEN_EXPIRATION', 60 * 24), // 24 hours by default
 
     /*
     |--------------------------------------------------------------------------

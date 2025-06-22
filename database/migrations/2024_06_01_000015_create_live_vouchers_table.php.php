@@ -15,8 +15,8 @@ return new class extends Migration
             $table->decimal('discount_value', 10, 2);
             $table->foreignId('live_stream_id')->constrained('live_streams')->onDelete('restrict');
             $table->string('description')->nullable();
-            $table->timestamp('start_time');
-            $table->timestamp('end_time');
+            $table->timestamp('start_time')->nullable();
+            $table->timestamp('end_time')->nullable();
             $table->boolean('active')->default(true);
             $table->timestamps();
         });

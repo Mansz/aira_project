@@ -1,28 +1,28 @@
 <?php
 
 return [
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'login', 'logout', 'register'],
 
     'allowed_methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 
-    'allowed_origins' => array_filter([
-        // Local Development
-        env('APP_ENV') === 'local' ? 'http://localhost:3000' : null,  // React Admin Panel (default)
-        env('APP_ENV') === 'local' ? 'http://localhost:5176' : null,  // Vite port (admin panel)
-        env('APP_ENV') === 'local' ? 'http://localhost:5178' : null,  // Vite port (admin panel)
-        env('APP_ENV') === 'local' ? 'http://localhost:5179' : null,  // Vite port (admin panel)
-        env('APP_ENV') === 'local' ? 'http://localhost:5180' : null,  // Current Vite port (admin panel)
-        env('APP_ENV') === 'local' ? 'http://localhost:8000' : null,  // Laravel API
-        env('APP_ENV') === 'local' ? 'http://127.0.0.1:3000' : null,  // React Admin Panel (127.0.0.1)
-        env('APP_ENV') === 'local' ? 'http://127.0.0.1:5176' : null,  // Vite (admin panel)
-        env('APP_ENV') === 'local' ? 'http://127.0.0.1:5178' : null,  // Vite (admin panel)
-        env('APP_ENV') === 'local' ? 'http://127.0.0.1:5179' : null,  // Vite (admin panel)
-        env('APP_ENV') === 'local' ? 'http://127.0.0.1:5180' : null,  // Current Vite (admin panel)
-        
-        // Production URLs
-        env('FRONTEND_URL'),      // React frontend
-        env('ADMIN_PANEL_URL'),   // Admin panel
-        env('ANDROID_APP_URL'),   // Android app domain
+    'allowed_origins' => env('APP_ENV') === 'local' ? [
+        'http://localhost:3000',
+        'http://localhost:5173',
+        'http://localhost:5174',
+        'http://localhost:5175',
+        'http://localhost:5176',
+        'http://localhost:8000',
+        'http://127.0.0.1:3000',
+        'http://127.0.0.1:5173',
+        'http://127.0.0.1:5174',
+        'http://127.0.0.1:5175',
+        'http://127.0.0.1:5176',
+        'http://127.0.0.1:8000',
+    ] : array_filter([
+        env('FRONTEND_URL'),
+        env('ADMIN_PANEL_URL'),
+        'https://frontend.example.com',
+        'https://api.example.com',
     ]),
 
     'allowed_origins_patterns' => [],
@@ -33,11 +33,17 @@ return [
         'Content-Type',
         'X-Requested-With',
         'X-XSRF-TOKEN',
+        'X-CSRF-TOKEN',
         'X-HTTP-Method-Override',
+        'Origin',
+        'Cache-Control',
+        'Pragma',
     ],
 
     'exposed_headers' => [
         'Authorization',
+        'X-CSRF-TOKEN',
+        'X-XSRF-TOKEN',
     ],
 
     'max_age' => 60 * 60, // 1 hour
