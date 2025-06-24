@@ -66,10 +66,11 @@ const menuItems: MenuItem[] = [
     title: 'Live Streaming',
     icon: <LiveTv />,
     children: [
+      
       {
-        title: 'Live Dashboard',
-        path: '/live/dashboard',
-        icon: <Dashboard />,
+        title: 'Daftar Streaming',
+        path: '/streaming/table',
+        icon: <LiveTv />,
       },
       {
         title: 'Live Orders',

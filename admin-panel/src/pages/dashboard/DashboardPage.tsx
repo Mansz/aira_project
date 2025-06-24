@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Grid,
@@ -116,6 +117,7 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon, trend, color })
 );
 
 const DashboardPage: React.FC = () => {
+  const navigate = useNavigate();
   const {
     dashboardStats,
     loadingDashboard,
@@ -158,13 +160,13 @@ const DashboardPage: React.FC = () => {
   };
 
   const handleStartNewLive = (): void => {
-    // Implement start new live functionality
-    console.log('Starting new live session...');
+    // Navigate to live streaming page
+    navigate('/streaming/live');
   };
 
   const handleViewOrder = (orderId: string | number): void => {
-    // Implement view order functionality
-    console.log('Viewing order:', orderId);
+    // Navigate to order detail page
+    navigate(`/orders/${orderId}`);
   };
 
   return (

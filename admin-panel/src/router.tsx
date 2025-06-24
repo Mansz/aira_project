@@ -9,6 +9,7 @@ import { LiveVouchersPage } from '@/pages/streaming/LiveVouchersPage';
 import { LiveOrdersPage } from '@/pages/streaming/LiveOrdersPage';
 import { LiveStreamingPage } from '@/pages/streaming/LiveStreamingPage';
 import { LiveCommentsPage } from '@/pages/streaming/LiveCommentsPage';
+import { LiveStreamTablePage } from '@/pages/streaming/LiveStreamTablePage';
 import { ProductsPage } from '@/pages/ecommerce/ProductsPage';
 import CategoriesPage from '@/pages/ecommerce/CategoriesPage';
 import CategoryForm from '@/pages/ecommerce/CategoryForm';
@@ -71,6 +72,10 @@ export const router = createBrowserRouter(
           {
             path: 'dashboard',
             element: <LiveDashboardPage />,
+          },
+          {
+            path: 'table',
+            element: <LiveStreamTablePage />,
           },
           {
             path: 'live',
