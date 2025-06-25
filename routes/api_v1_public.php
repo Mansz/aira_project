@@ -35,6 +35,7 @@ Route::get('products/categories', [ProductController::class, 'categories']);
 
 // Live Streaming (Public)
 Route::get('streams/active', [LiveStreamingController::class, 'getActiveStreams']);
+Route::get('vouchers', [LiveStreamingController::class, 'getActiveVouchers']);
 Route::get('streams/{streamId}', [LiveStreamingController::class, 'getStreamDetails']);
 Route::get('streams/{streamId}/products', [LiveStreamingController::class, 'getStreamProducts']);
 

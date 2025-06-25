@@ -318,7 +318,7 @@ class StreamingController extends Controller
     public function vouchers()
     {
         try {
-            $vouchers = LiveVoucher::latest()->get()->map(function ($voucher) {
+            $vouchers = LiveVoucher::with('liveStream')->latest()->get()->map(function ($voucher) {
                 return [
                     'id' => $voucher->id,
                     'code' => $voucher->code,
@@ -330,6 +330,10 @@ class StreamingController extends Controller
                     'active' => $voucher->active,
                     'is_valid' => $voucher->isValid(),
                     'used_count' => $voucher->liveOrders()->count(),
+                    'live_stream' => $voucher->liveStream ? [
+                        'id' => $voucher->liveStream->id,
+                        'title' => $voucher->liveStream->title,
+                    ] : null
                 ];
             });
 
@@ -491,6 +495,108 @@ class StreamingController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Failed to save stream analytics',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function storeVoucher(Request $request)
+    {
+        $request->validate([
+            'code' => 'required|string|unique:live_vouchers,code',
+            'discount_type' => 'required|in:percentage,amount',
+            'discount_value' => 'required|numeric|min:0',
+            'live_stream_id' => 'required|exists:live_streams,id',
+            'description' => 'nullable|string',
+            'start_time' => 'required|date',
+            'end_time' => 'required|date|after:start_time',
+        ]);
+
+        try {
+            $voucher = LiveVoucher::create([
+                'code' => strtoupper($request->code),
+                'discount_type' => $request->discount_type,
+                'discount_value' => $request->discount_value,
+                'live_stream_id' => $request->live_stream_id,
+                'description' => $request->description,
+                'start_time' => $request->start_time,
+                'end_time' => $request->end_time,
+                'active' => true
+            ]);
+
+            return response()->json([
+                'data' => $voucher->fresh(['liveStream']),
+                'message' => 'Voucher created successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to create voucher',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateVoucher(Request $request, $id)
+    {
+        $voucher = LiveVoucher::findOrFail($id);
+
+        $request->validate([
+            'code' => 'required|string|unique:live_vouchers,code,' . $id,
+            'discount_type' => 'required|in:percentage,amount',
+            'discount_value' => 'required|numeric|min:0',
+            'live_stream_id' => 'required|exists:live_streams,id',
+            'description' => 'nullable|string',
+            'start_time' => 'required|date',
+            'end_time' => 'required|date|after:start_time',
+            'active' => 'boolean'
+        ]);
+
+        try {
+            $voucher->update([
+                'code' => strtoupper($request->code),
+                'discount_type' => $request->discount_type,
+                'discount_value' => $request->discount_value,
+                'live_stream_id' => $request->live_stream_id,
+                'description' => $request->description,
+                'start_time' => $request->start_time,
+                'end_time' => $request->end_time,
+                'active' => $request->active ?? $voucher->active
+            ]);
+
+            return response()->json([
+                'data' => $voucher->fresh(['liveStream']),
+                'message' => 'Voucher updated successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to update voucher',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function deleteVoucher($id)
+    {
+        try {
+            $voucher = LiveVoucher::findOrFail($id);
+
+            if ($voucher->liveOrders()->exists()) {
+                return response()->json([
+                    'message' => 'Cannot delete voucher that has been used in orders'
+                ], 400);
+            }
+
+            $voucher->delete();
+
+            return response()->json([
+                'message' => 'Voucher deleted successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Failed to delete voucher',
                 'error' => $e->getMessage()
             ], 500);
         }

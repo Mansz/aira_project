@@ -19,9 +19,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
   CircularProgress,
   Alert,
 } from '@mui/material';
@@ -32,7 +29,6 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   FilterList as FilterListIcon,
-  CloudUpload as CloudUploadIcon,
   MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
@@ -298,8 +294,16 @@ export const ProductsPage = () => {
               <CardMedia
                 component="img"
                 height="200"
-                image={product.image || '/placeholder-image.jpg'}
+                image={product.image ? `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'}/storage/${product.image}` : '/placeholder-image.jpg'}
                 alt={product.name}
+                sx={{
+                  objectFit: 'cover',
+                  backgroundColor: '#f5f5f5'
+                }}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = '/placeholder-image.jpg';
+                }}
               />
               <CardContent>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

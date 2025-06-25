@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\LiveStream;
 use App\Models\LiveComment;
+use App\Models\LiveVoucher;
 use App\Services\ZegoCloudService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -107,5 +108,46 @@ class LiveStreamingController extends Controller
             ->findOrFail($streamId);
 
         return response()->json($stream->products);
+    }
+
+    public function getActiveVouchers()
+    {
+        try {
+            $vouchers = LiveVoucher::with('liveStream:id,title')
+                ->where('active', true)
+                ->where('start_time', '<=', now())
+                ->where('end_time', '>=', now())
+                ->latest()
+                ->get()
+                ->map(function ($voucher) {
+                    return [
+                        'id' => $voucher->id,
+                        'code' => $voucher->code,
+                        'discount_type' => $voucher->discount_type,
+                        'discount_value' => $voucher->discount_value,
+                        'description' => $voucher->description,
+                        'start_time' => $voucher->start_time?->toISOString(),
+                        'end_time' => $voucher->end_time?->toISOString(),
+                        'is_valid' => $voucher->isValid(),
+                        'live_stream' => $voucher->liveStream ? [
+                            'id' => $voucher->liveStream->id,
+                            'title' => $voucher->liveStream->title,
+                        ] : null
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'data' => $vouchers,
+                'message' => 'Active vouchers retrieved successfully'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve active vouchers',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

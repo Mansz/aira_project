@@ -98,6 +98,9 @@ Route::prefix('v1')->group(function () {
                 
                 // Vouchers
                 Route::get('vouchers', [AdminStreamingController::class, 'vouchers']);
+                Route::post('vouchers', [AdminStreamingController::class, 'storeVoucher']);
+                Route::put('vouchers/{id}', [AdminStreamingController::class, 'updateVoucher']);
+                Route::delete('vouchers/{id}', [AdminStreamingController::class, 'deleteVoucher']);
                 
                 // Comments
                 Route::get('comments', [AdminStreamingController::class, 'comments']);

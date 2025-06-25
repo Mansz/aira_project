@@ -32,48 +32,26 @@ import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
-// Mock data for vouchers
-const vouchers = [
-  {
-    id: 1,
-    code: 'LIVE10',
-    discount: 10,
-    type: 'percentage',
-    validFrom: '2024-01-20T10:00:00',
-    validUntil: '2024-01-20T22:00:00',
-    maxUses: 100,
-    usedCount: 45,
-    status: 'active',
-  },
-  {
-    id: 2,
-    code: 'FASHION50K',
-    discount: 50000,
-    type: 'fixed',
-    validFrom: '2024-01-21T14:00:00',
-    validUntil: '2024-01-21T20:00:00',
-    maxUses: 50,
-    usedCount: 0,
-    status: 'scheduled',
-  },
-];
+import { useQuery } from '@tanstack/react-query';
+import { api } from '../../lib/api';
 
 interface VoucherFormDialogProps {
   open: boolean;
   voucher?: any;
+  liveStreams?: any[];
   onClose: () => void;
   onSubmit: (data: any) => void;
 }
 
-const VoucherFormDialog = ({ open, voucher, onClose, onSubmit }: VoucherFormDialogProps) => {
+const VoucherFormDialog = ({ open, voucher, liveStreams, onClose, onSubmit }: VoucherFormDialogProps) => {
   const [formData, setFormData] = useState({
     code: voucher?.code || '',
-    discount: voucher?.discount || '',
-    type: voucher?.type || 'percentage',
-    validFrom: voucher?.validFrom ? new Date(voucher.validFrom) : new Date(),
-    validUntil: voucher?.validUntil ? new Date(voucher.validUntil) : new Date(),
-    maxUses: voucher?.maxUses || '',
-    status: voucher?.status || 'active',
+    discount_value: voucher?.discount_value || '',
+    discount_type: voucher?.discount_type || 'percentage',
+    live_stream_id: voucher?.live_stream_id || '',
+    description: voucher?.description || '',
+    start_time: voucher?.start_time ? new Date(voucher.start_time) : new Date(),
+    end_time: voucher?.end_time ? new Date(voucher.end_time) : new Date(),
   });
 
   const handleSubmit = () => {
@@ -96,19 +74,34 @@ const VoucherFormDialog = ({ open, voucher, onClose, onSubmit }: VoucherFormDial
               setFormData({ ...formData, code: e.target.value.toUpperCase() })
             }
           />
+          <TextField
+            select
+            fullWidth
+            label="Live Stream"
+            value={formData.live_stream_id}
+            onChange={(e) =>
+              setFormData({ ...formData, live_stream_id: e.target.value })
+            }
+          >
+            {liveStreams?.map((stream: any) => (
+              <MenuItem key={stream.id} value={stream.id}>
+                {stream.title}
+              </MenuItem>
+            ))}
+          </TextField>
           <Stack direction="row" spacing={2}>
             <TextField
               fullWidth
               label="Nilai Diskon"
               type="number"
-              value={formData.discount}
+              value={formData.discount_value}
               onChange={(e) =>
-                setFormData({ ...formData, discount: e.target.value })
+                setFormData({ ...formData, discount_value: e.target.value })
               }
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
-                    {formData.type === 'percentage' ? '%' : 'Rp'}
+                    {formData.discount_type === 'percentage' ? '%' : 'Rp'}
                   </InputAdornment>
                 ),
               }}
@@ -117,57 +110,45 @@ const VoucherFormDialog = ({ open, voucher, onClose, onSubmit }: VoucherFormDial
               select
               fullWidth
               label="Tipe Diskon"
-              value={formData.type}
+              value={formData.discount_type}
               onChange={(e) =>
-                setFormData({ ...formData, type: e.target.value })
+                setFormData({ ...formData, discount_type: e.target.value })
               }
             >
               <MenuItem value="percentage">Persentase</MenuItem>
-              <MenuItem value="fixed">Nominal Tetap</MenuItem>
+              <MenuItem value="amount">Nominal Tetap</MenuItem>
             </TextField>
           </Stack>
+          <TextField
+            fullWidth
+            label="Deskripsi"
+            value={formData.description}
+            onChange={(e) =>
+              setFormData({ ...formData, description: e.target.value })
+            }
+            multiline
+            rows={2}
+          />
           <LocalizationProvider dateAdapter={AdapterDateFns}>
             <Stack direction="row" spacing={2}>
               <DateTimePicker
                 label="Berlaku Dari"
-                value={formData.validFrom}
+                value={formData.start_time}
                 onChange={(date) =>
-                  setFormData({ ...formData, validFrom: date || new Date() })
+                  setFormData({ ...formData, start_time: date || new Date() })
                 }
                 sx={{ flex: 1 }}
               />
               <DateTimePicker
                 label="Berlaku Sampai"
-                value={formData.validUntil}
+                value={formData.end_time}
                 onChange={(date) =>
-                  setFormData({ ...formData, validUntil: date || new Date() })
+                  setFormData({ ...formData, end_time: date || new Date() })
                 }
                 sx={{ flex: 1 }}
               />
             </Stack>
           </LocalizationProvider>
-          <TextField
-            fullWidth
-            label="Maksimal Penggunaan"
-            type="number"
-            value={formData.maxUses}
-            onChange={(e) =>
-              setFormData({ ...formData, maxUses: e.target.value })
-            }
-          />
-          <TextField
-            select
-            fullWidth
-            label="Status"
-            value={formData.status}
-            onChange={(e) =>
-              setFormData({ ...formData, status: e.target.value })
-            }
-          >
-            <MenuItem value="active">Aktif</MenuItem>
-            <MenuItem value="scheduled">Terjadwal</MenuItem>
-            <MenuItem value="inactive">Nonaktif</MenuItem>
-          </TextField>
         </Box>
       </DialogContent>
       <DialogActions>
@@ -193,6 +174,20 @@ export const LiveVouchersPage = () => {
   const [selectedVoucher, setSelectedVoucher] = useState<any>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Fetch vouchers from API
+  const { data: vouchersData, isLoading } = useQuery({
+    queryKey: ['liveVouchers'],
+    queryFn: () => api.getLiveVouchers(),
+  });
+
+  // Fetch live streams for the form dropdown
+  const { data: liveStreams } = useQuery({
+    queryKey: ['liveStreams'],
+    queryFn: () => api.getLiveStreamHistory(),
+  });
+
+  const vouchers = vouchersData?.data || [];
 
   const handleOpenDialog = (voucher?: any) => {
     setSelectedVoucher(voucher);
@@ -275,10 +270,9 @@ export const LiveVouchersPage = () => {
             <TableHead>
               <TableRow>
                 <TableCell>Kode</TableCell>
+                <TableCell>Live Stream</TableCell>
                 <TableCell>Diskon</TableCell>
                 <TableCell>Periode</TableCell>
-                <TableCell>Penggunaan</TableCell>
-                <TableCell>Status</TableCell>
                 <TableCell align="right">Aksi</TableCell>
               </TableRow>
             </TableHead>
@@ -291,30 +285,21 @@ export const LiveVouchersPage = () => {
                       {voucher.code}
                     </Stack>
                   </TableCell>
+                  <TableCell>{voucher.live_stream?.title || '-'}</TableCell>
                   <TableCell>
-                    {voucher.type === 'percentage'
-                      ? `${voucher.discount}%`
-                      : `Rp ${voucher.discount.toLocaleString()}`}
+                    {voucher.discount_type === 'percentage'
+                      ? `${voucher.discount_value}%`
+                      : `Rp ${voucher.discount_value.toLocaleString()}`}
                   </TableCell>
                   <TableCell>
                     <Stack spacing={0.5}>
                       <Typography variant="body2">
-                        Mulai: {formatDate(voucher.validFrom)}
+                        Mulai: {formatDate(voucher.start_time)}
                       </Typography>
                       <Typography variant="body2">
-                        Selesai: {formatDate(voucher.validUntil)}
+                        Selesai: {formatDate(voucher.end_time)}
                       </Typography>
                     </Stack>
-                  </TableCell>
-                  <TableCell>
-                    {voucher.usedCount} / {voucher.maxUses}
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      size="small"
-                      label={voucher.status}
-                      color={getStatusColor(voucher.status)}
-                    />
                   </TableCell>
                   <TableCell align="right">
                     <IconButton
@@ -342,6 +327,7 @@ export const LiveVouchersPage = () => {
       <VoucherFormDialog
         open={openDialog}
         voucher={selectedVoucher}
+        liveStreams={liveStreams?.data || []}
         onClose={handleCloseDialog}
         onSubmit={handleSubmit}
       />

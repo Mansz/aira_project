@@ -5,8 +5,14 @@ import { Order, OrderStats } from '../types/order';
 import { Payment } from '../types/payment';
 import { Product, ProductCategory } from '../types/product';
 import { Shipment, ShipmentStats } from '../types/shipment';
-import { LiveStream } from '../types/stream';
-import { Admin, AdminActivity } from '../types/admin';
+import { 
+  LiveStream, 
+  StreamStats, 
+  LiveOrder, 
+  LiveComment, 
+  LiveVoucher 
+} from '../types/stream';
+// Removed unused imports since these types are not used directly in the API methods
 
 // Use relative URLs when running in development with proxy
 const BASE_URL = '';  // Remove /api since it's already included in the route
@@ -261,68 +267,100 @@ class Api {
   }
 
   // --- LIVE STREAMING ---
-  async getLiveStreamStats() {
+  async getLiveStreamStats(): Promise<{ data: StreamStats }> {
     const response = await this.client.get('/api/v1/admin/streaming/stats');
     return response.data;
   }
 
-  async getActiveStream() {
+  async getActiveStream(): Promise<{ data: LiveStream | null }> {
     const response = await this.client.get('/api/v1/admin/streaming/active');
     return response.data;
   }
 
-  async getLiveStreamHistory() {
+  async getLiveStreamHistory(): Promise<{ data: LiveStream[] }> {
     const response = await this.client.get('/api/v1/admin/streaming');
     return response.data;
   }
 
-  async startLiveStream(data: { title: string; description?: string }) {
+  async startLiveStream(data: { title: string; description?: string }): Promise<{ data: LiveStream }> {
     const response = await this.client.post('/api/v1/admin/streaming/start', data);
     return response.data;
   }
 
-  async endLiveStream() {
+  async endLiveStream(): Promise<{ data: LiveStream }> {
     const response = await this.client.post('/api/v1/admin/streaming/end');
     return response.data;
   }
 
-  async getLiveVouchers() {
+  async getLiveVouchers(): Promise<{ data: LiveVoucher[] }> {
     const response = await this.client.get('/api/v1/admin/streaming/vouchers');
     return response.data;
   }
 
-  async getLiveOrders() {
+  async createLiveVoucher(data: {
+    code: string;
+    discount_type: 'percentage' | 'amount';
+    discount_value: number;
+    live_stream_id: number;
+    description?: string;
+    start_time: string;
+    end_time: string;
+  }): Promise<{ data: LiveVoucher }> {
+    const response = await this.client.post('/api/v1/admin/streaming/vouchers', data);
+    return response.data;
+  }
+
+  async updateLiveVoucher(id: number, data: {
+    code: string;
+    discount_type: 'percentage' | 'amount';
+    discount_value: number;
+    live_stream_id: number;
+    description?: string;
+    start_time: string;
+    end_time: string;
+    active?: boolean;
+  }): Promise<{ data: LiveVoucher }> {
+    const response = await this.client.put(`/api/v1/admin/streaming/vouchers/${id}`, data);
+    return response.data;
+  }
+
+  async deleteLiveVoucher(id: number): Promise<{ message: string }> {
+    const response = await this.client.delete(`/api/v1/admin/streaming/vouchers/${id}`);
+    return response.data;
+  }
+
+  async getLiveOrders(): Promise<{ data: LiveOrder[] }> {
     const response = await this.client.get('/api/v1/admin/streaming/orders');
     return response.data;
   }
 
-  async getStreamToken(streamTitle: string) {
+  async getStreamToken(streamTitle: string): Promise<{ data: { token: string; room_id: string; stream_id: string } }> {
     const response = await this.client.post('/api/v1/admin/streaming/token', { stream_title: streamTitle });
     return response.data;
   }
 
-  async confirmLiveOrder(orderId: string) {
+  async confirmLiveOrder(orderId: string): Promise<{ data: LiveOrder }> {
     const response = await this.client.post(`/api/v1/admin/streaming/orders/${orderId}/confirm`);
     return response.data;
   }
 
-  async updateLiveOrderStatus(orderId: string, status: string) {
+  async updateLiveOrderStatus(orderId: string, status: string): Promise<{ data: LiveOrder }> {
     const response = await this.client.patch(`/api/v1/admin/streaming/orders/${orderId}/status`, { status });
     return response.data;
   }
 
-  async getLiveComments(streamId?: string) {
+  async getLiveComments(streamId?: string): Promise<{ data: LiveComment[] }> {
     const params = streamId ? { stream_id: streamId } : {};
     const response = await this.client.get('/api/v1/admin/streaming/comments', { params });
     return response.data;
   }
 
-  async deleteLiveComment(commentId: number) {
+  async deleteLiveComment(commentId: number): Promise<{ message: string }> {
     const response = await this.client.delete(`/api/v1/admin/streaming/comments/${commentId}`);
     return response.data;
   }
 
-  async pinProductToStream(streamId: string, productId: number) {
+  async pinProductToStream(streamId: string, productId: number): Promise<{ data: LiveStream }> {
     const response = await this.client.post('/api/v1/admin/streaming/pin-product', {
       live_stream_id: streamId,
       product_id: productId
@@ -330,14 +368,14 @@ class Api {
     return response.data;
   }
 
-  async unpinProductFromStream(streamId: string) {
+  async unpinProductFromStream(streamId: string): Promise<{ data: LiveStream }> {
     const response = await this.client.post('/api/v1/admin/streaming/unpin-product', {
       live_stream_id: streamId
     });
     return response.data;
   }
 
-  async saveStreamAnalytics(streamId: string, data: { total_comments: number; active_users: number }) {
+  async saveStreamAnalytics(streamId: string, data: { total_comments: number; active_users: number }): Promise<{ message: string }> {
     const response = await this.client.post('/api/v1/admin/streaming/analytics', {
       live_stream_id: streamId,
       ...data
@@ -345,12 +383,12 @@ class Api {
     return response.data;
   }
 
-  async deleteLiveStream(streamId: string) {
+  async deleteLiveStream(streamId: string): Promise<{ message: string }> {
     const response = await this.client.delete(`/api/v1/admin/streaming/${streamId}`);
     return response.data;
   }
 
-  async updateLiveStream(streamId: string, data: { title: string; description?: string }) {
+  async updateLiveStream(streamId: string, data: { title: string; description?: string }): Promise<{ data: LiveStream }> {
     const response = await this.client.put(`/api/v1/admin/streaming/${streamId}`, data);
     return response.data;
   }
@@ -602,3 +640,6 @@ class Api {
 }
 
 export const api = new Api();
+
+// Re-export types for convenience
+export type { Product, ProductCategory };
